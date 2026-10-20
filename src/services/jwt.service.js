@@ -1,0 +1,45 @@
+import jwt from 'jsonwebtoken';
+
+import 'dotenv/config';
+import { ApiError } from '../exeptions/api.error';
+
+function sign(user) {
+  const token = jwt.sign(user, process.env.JWT_KEY, {
+    expiresIn: '5s',
+  });
+
+  return token;
+}
+
+function verify(token) {
+  try {
+    return jwt.verify(token, process.env.JWT_KEY);
+  } catch (e) {
+    // console.log(token);
+
+    return null;
+  }
+}
+
+function signRefresh(user) {
+  const token = jwt.sign(user, process.env.JWT_REFRESH_KEY);
+
+  return token;
+}
+
+function verifyRefresh(token) {
+  try {
+    return jwt.verify(token, process.env.JWT_REFRESH_KEY);
+  } catch (e) {
+    // console.log(token);
+
+    return null;
+  }
+}
+
+export const jwtService = {
+  sign,
+  verify,
+  signRefresh,
+  verifyRefresh,
+};
