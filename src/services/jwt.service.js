@@ -1,7 +1,6 @@
 import jwt from 'jsonwebtoken';
 
 import 'dotenv/config';
-import { ApiError } from '../exeptions/api.error';
 
 function sign(user) {
   const token = jwt.sign(user, process.env.JWT_KEY, {

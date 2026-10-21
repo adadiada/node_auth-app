@@ -18,7 +18,7 @@ function findByEmail(email) {
 }
 
 async function register(email, password) {
-  const activationToken = uuid;
+  const activationToken = uuid();
   const existUser = await findByEmail(email);
   if (existUser) {
     throw ApiError.badRequest('User already exist', {
