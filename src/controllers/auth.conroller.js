@@ -4,7 +4,8 @@ import { userService } from '../services/user.service.js';
 import { jwtService } from '../services/jwt.service.js';
 import { ApiError } from '../exeptions/api.error.js';
 import bcrypt from 'bcrypt';
-import { tokenSerice } from '../services/token.service.js';
+import cookieParser from 'cookie-parser';
+import { tokenService } from '../services/token.service.js';
 
 const EMAIL_PATTERN = /^[\w.+-]+@([\w-]+\.){1,3}[\w-]{2,}$/;
 
@@ -57,7 +58,7 @@ const login = async (req, res) => {
     throw ApiError.badRequest('No such user');
   }
 
-  const isPasswordValid = bcrypt.compare(password, user.password);
+  const isPasswordValid = await bcrypt.compare(password, user.password);
   if (!isPasswordValid) {
     throw ApiError.badRequest('Wrong password');
   }
@@ -66,12 +67,15 @@ const login = async (req, res) => {
 
 const refresh = async (req, res) => {
   const { refreshToken } = req.cookies;
+  // console.log('req.cookies', req.cookies);
+  // console.log('userData', userData);
 
-  const userData = jwtService.verifyRefresh(refreshToken);
-  const token = await tokenSerice.getByToken(refreshToken);
+  const userData = await jwtService.verifyRefresh(refreshToken);
+  const token = await tokenService.getByToken(refreshToken);
 
   if (!userData || !token) {
-    throw ApiError.unauthorized;
+    throw ApiError.unauthorized();
+    return;
   }
   const user = await userService.findByEmail(userData.email);
   await generateTokens(res, user);
@@ -80,19 +84,71 @@ const refresh = async (req, res) => {
 const generateTokens = async (res, user) => {
   const normalizeUser = userService.normalize(user);
 
-  const accessTonken = jwtService.sign(normalizeUser);
-  const refreshTonken = jwtService.signRefresh(normalizeUser);
+  const accessToken = jwtService.sign(normalizeUser);
+  const refreshToken = jwtService.signRefresh(normalizeUser);
 
-  await tokenSerice.save(normalizeUser.id, refreshTonken);
+  await tokenService.save(normalizeUser.id, refreshToken);
 
-  res.cookie('refreshTonken', refreshTonken, {
+  res.cookie('refreshToken', refreshToken, {
     maxAge: 30 * 24 * 60 * 60 * 1000,
     HttpOnly: true,
   });
   res.send({
     user: normalizeUser,
-    accessTonken,
+    accessToken,
   });
+};
+
+const logout = async (req, res) => {
+  console.log('req.cookies', req.cookies);
+
+  const { refreshToken } = req.cookies;
+  const userData = await jwtService.verifyRefresh(refreshToken);
+  console.log('refreshToken', refreshToken);
+  console.log('userData', userData);
+  if (!userData || !refreshToken) {
+    throw ApiError.unauthorized();
+    return;
+  }
+
+  await tokenService.remove(userData.id);
+  res.sendStatus(204);
+};
+
+const changeEmail = async (req, res) => {
+  const { newEmail, password } = req.body; // noviy email
+
+  const user = await userService.findById(req.user.id); // знайти користувача в базі дани
+
+  const isPasswordValid = await bcrypt.compare(password, user.password); //porinyannya password bcrypt.compare
+  if (!isPasswordValid) {
+    throw ApiError.badRequest('Wrong password');
+  }
+  const existingUser = await userService.findByEmail(newEmail); //чи новий email вже існує в базі
+  if (existingUser) {
+    throw ApiError.badRequest('Email already in use');
+  }
+  res.sendStatus(204);
+};
+
+const sendResetPassword = async (req, res) => {
+  const { token } = req.params;
+  const { password, confirmation } = req.body;
+
+  const user = await userService.getByResetToken(token); // знайти за токеном
+  if (!user) {
+    throw ApiError.badRequest('Wrong reset link');
+  }
+
+  if (password !== confirmation) {
+    throw ApiError.badRequest('Passwords do not match');
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10); // захешувати пароль
+  user.password = hashedPassword;
+  user.resetPasswordToken = null; // очистити токен
+  await user.save();
+  res.json({ message: 'Password reset successfully' });
 };
 
 export const authContoller = {
@@ -100,4 +156,7 @@ export const authContoller = {
   activate,
   login,
   refresh,
+  logout,
+  sendResetPassword,
+  changeEmail,
 };

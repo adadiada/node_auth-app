@@ -1,7 +1,7 @@
 export const catchError = (action) => {
-  return function (req, res, next) {
+  return async function (req, res, next) {
     try {
-      action(req, res, next);
+      await action(req, res, next);
     } catch (error) {
       next(error);
     }

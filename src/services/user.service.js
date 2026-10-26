@@ -30,9 +30,31 @@ async function register(email, password) {
   await emailService.sendActivatationEmail(email, activationToken);
 }
 
+const resetPasswordToken = async (req, res) => {
+  const { email } = req.body;
+
+  const user = await findByEmail(email);
+  if (!user) {
+    res.sendStatus(204);
+    return;
+  }
+
+  const resetToken = uuid();
+
+  await userService.update(
+    { resetPasswordToken: resetToken },
+    { where: { id: user.id } },
+  );
+
+  await emailService.sendPostResetPassword(email, resetToken);
+
+  res.sendStatus(204);
+};
+
 export const userService = {
   getAllActivated,
   normalize,
   findByEmail,
   register,
+  resetPasswordToken,
 };

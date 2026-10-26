@@ -41,6 +41,37 @@ export function sendActivatationEmail(email, token) {
   });
 }
 
+export function sendChangeEmail(email, token) {
+  const href = `${process.env.CLIENT_HOST}/change-email/${token}`;
+  const html = `
+ <h1>Change email</h1>
+ <a href="${href}">${href}</a>
+ `;
+
+  return send({
+    email,
+    subject: 'Change email',
+    html,
+  });
+}
+
+export function sendPostResetPassword(email, token) {
+  const href = `${process.env.CLIENT_HOST}/reset-password/${token}`;
+  const html = `
+ <h1>Reset password</h1>
+ <a href="${href}">${href}</a>
+ `;
+
+  return send({
+    email,
+    subject: 'Reset password',
+    html,
+  });
+}
+
 export const emailService = {
+  send,
   sendActivatationEmail,
+  sendChangeEmail,
+  sendPostResetPassword,
 };

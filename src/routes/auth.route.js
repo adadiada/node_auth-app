@@ -7,9 +7,13 @@ export const authRouter = new express.Router();
 authRouter.post('/registration', catchError(authContoller.register));
 authRouter.get(
   '/activation/:activationToken',
-  catchError,
-  authContoller.activate,
+  catchError(authContoller.activate),
 );
 authRouter.post('/login', catchError(authContoller.login));
-console.log('login');
-authRouter.post('/refresh', catchError(authContoller.refresh));
+authRouter.get('/refresh', catchError(authContoller.refresh));
+authRouter.post('/logout', catchError(authContoller.logout));
+authRouter.get('/change-email', catchError(authContoller.changeEmail));
+authRouter.post(
+  '/reset-password/:token',
+  catchError(authContoller.sendResetPassword),
+);

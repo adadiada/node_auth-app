@@ -5,8 +5,9 @@ async function save(userId, newToken) {
 
   if (!token) {
     await Token.create({ userId, refreshToken: newToken });
+    return;
   }
-  token = refreshToken = newToken;
+  token.refreshToken = newToken;
   await token.save();
 }
 
@@ -14,7 +15,12 @@ function getByToken(refreshToken) {
   return Token.findOne({ where: { refreshToken } });
 }
 
-export const tokenSerice = {
+function remove(userId) {
+  return Token.destroy({ where: { userId } });
+}
+
+export const tokenService = {
   save,
   getByToken,
+  remove,
 };
