@@ -104,8 +104,8 @@ const logout = async (req, res) => {
 
   const { refreshToken } = req.cookies;
   const userData = await jwtService.verifyRefresh(refreshToken);
-  console.log('refreshToken', refreshToken);
-  console.log('userData', userData);
+  // console.log('refreshToken', refreshToken);
+  // console.log('userData', userData);
   if (!userData || !refreshToken) {
     throw ApiError.unauthorized();
     return;
@@ -115,10 +115,10 @@ const logout = async (req, res) => {
   res.sendStatus(204);
 };
 
-const changeEmail = async (req, res) => {
-  const { newEmail, password } = req.body; // noviy email
+const resetPassword = async (req, res) => {
+  const { email, password } = req.body;
 
-  const user = await userService.findById(req.user.id); // знайти користувача в базі дани
+  const user = await userService.findByEmail(email); // знайти користувача в базі дани
 
   const isPasswordValid = await bcrypt.compare(password, user.password); //porinyannya password bcrypt.compare
   if (!isPasswordValid) {
@@ -158,5 +158,5 @@ export const authContoller = {
   refresh,
   logout,
   sendResetPassword,
-  changeEmail,
+  resetPassword,
 };

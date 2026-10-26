@@ -12,7 +12,7 @@ authRouter.get(
 authRouter.post('/login', catchError(authContoller.login));
 authRouter.get('/refresh', catchError(authContoller.refresh));
 authRouter.post('/logout', catchError(authContoller.logout));
-authRouter.get('/change-email', catchError(authContoller.changeEmail));
+authRouter.post('/reset-password', catchError(authContoller.resetPassword));
 authRouter.post(
   '/reset-password/:token',
   catchError(authContoller.sendResetPassword),
