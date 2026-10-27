@@ -127,7 +127,7 @@ const logout = async (req, res) => {
 };
 
 const resetPassword = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, newEmail } = req.body;
 
   const user = await userService.findByEmail(email); // знайти користувача в базі дани
 

@@ -54,8 +54,21 @@ export function sendPostResetPassword(email, token) {
   });
 }
 
+function sendEmailChangeNotification(oldEmail, newEmail) {
+  const html = `
+    <h1>Email Changed</h1>
+    <p>Your email was changed from ${oldEmail} to ${newEmail}</p>
+  `;
+  return send({
+    email: oldEmail,
+    subject: 'Email Changed',
+    html,
+  });
+}
+
 export const emailService = {
   send,
   sendActivatationEmail,
   sendPostResetPassword,
+  sendEmailChangeNotification,
 };

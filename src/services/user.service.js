@@ -2,6 +2,7 @@ import { ApiError } from '../exeptions/api.error.js';
 import { User } from '../models/user.js';
 import { emailService } from '../services/email.service.js';
 import { v4 as uuid } from 'uuid';
+import bcrypt from 'bcrypt';
 
 export async function getAllActivated() {
   return User.findAll({

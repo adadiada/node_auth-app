@@ -6,7 +6,7 @@ import { catchError } from '../utils/catchError.js';
 export const userRouter = new express.Router();
 
 userRouter.get('/', authMiddleware, catchError(userContoller.getAllActivated));
-userRouter.pstch(
+userRouter.patch(
   '/profile',
   authMiddleware,
   catchError(userContoller.updateProfile),

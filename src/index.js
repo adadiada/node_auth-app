@@ -28,7 +28,9 @@ app.get('/', (req, res) => {
 });
 
 app.use(errorMiddleware);
-
+app.use((req, res) => {
+  res.sendStatus(404);
+});
 app.listen(PORT, () => {
   // eslint-disable-next-line no-console
   console.log('Server is running');

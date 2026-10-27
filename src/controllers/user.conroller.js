@@ -1,5 +1,5 @@
-// import { User } from '../models/user.js';
 import { userService } from '../services/user.service.js';
+import { ApiError } from '../exeptions/api.error.js';
 
 const getAllActivated = async (req, res) => {
   const users = await userService.getAllActivated();

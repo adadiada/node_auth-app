@@ -19,8 +19,13 @@ function remove(userId) {
   return Token.destroy({ where: { userId } });
 }
 
+function getByResetToken(refreshToken) {
+  return Token.findOne({ where: { refreshToken } });
+}
+
 export const tokenService = {
   save,
   getByToken,
   remove,
+  getByResetToken,
 };
