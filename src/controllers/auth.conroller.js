@@ -19,18 +19,24 @@ function validatePassword(value) {
   if (value.length < 6) return 'At least 6 characters';
 }
 
+function validateName(value) {
+  if (!value) return 'Name is required';
+  if (value.length < 2) return 'At least 2 characters';
+}
+
 const register = async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, name } = req.body;
   const errors = {
+    name: validateName(name),
     email: validateEmail(email),
     password: validatePassword(password),
   };
-  if (errors.email || errors.password) {
+  if (errors.email || errors.password || errors.name) {
     throw ApiError.badRequest('bad request', errors);
   }
 
   const hashedPass = await bcrypt.hash(password, 10);
-  await userService.register(email, hashedPass);
+  await userService.register(email, hashedPass, name);
 
   res.send({ message: 'OK' });
 };
@@ -62,6 +68,11 @@ const login = async (req, res) => {
   if (!isPasswordValid) {
     throw ApiError.badRequest('Wrong password');
   }
+
+  if (user.activationToken) {
+    throw ApiError.badRequest('Please activate your email');
+  }
+
   await generateTokens(res, user);
 };
 
@@ -151,6 +162,25 @@ const sendResetPassword = async (req, res) => {
   res.json({ message: 'Password reset successfully' });
 };
 
+const resetPasswordToken = async (req, res) => {
+  const { email } = req.body;
+
+  const user = await findByEmail(email);
+  if (!user) {
+    res.sendStatus(204);
+    return;
+  }
+
+  const resetToken = uuid();
+
+  user.resetPasswordToken = resetToken;
+  await user.save();
+
+  await emailService.sendPostResetPassword(email, resetToken);
+
+  res.sendStatus(204);
+};
+
 export const authContoller = {
   register,
   activate,
@@ -159,4 +189,5 @@ export const authContoller = {
   logout,
   sendResetPassword,
   resetPassword,
+  resetPasswordToken,
 };

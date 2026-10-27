@@ -4,20 +4,20 @@ import { emailService } from '../services/email.service.js';
 import { v4 as uuid } from 'uuid';
 
 export async function getAllActivated() {
-  return User.findOne({
+  return User.findAll({
     where: { activationToken: null },
   });
 }
 
-function normalize({ id, email }) {
-  return { id, email };
+function normalize({ id, email, name }) {
+  return { id, email, name };
 }
 
 function findByEmail(email) {
   return User.findOne({ where: { email } });
 }
 
-async function register(email, password) {
+async function register(email, password, name) {
   const activationToken = uuid();
   const existUser = await findByEmail(email);
   if (existUser) {
@@ -25,36 +25,52 @@ async function register(email, password) {
       email: 'User already exist',
     });
   }
-  await User.create({ email, password, activationToken });
+  await User.create({ email, password, activationToken, name });
 
   await emailService.sendActivatationEmail(email, activationToken);
 }
 
-const resetPasswordToken = async (req, res) => {
-  const { email } = req.body;
+async function updateName(userId, name) {
+  // методи оновлення
+  const user = await User.findByPk(userId);
+  user.name = name;
+  await user.save();
+  return user;
+}
 
-  const user = await findByEmail(email);
-  if (!user) {
-    res.sendStatus(204);
-    return;
+async function updatePassword(userId, oldPassword, newPassword) {
+  const user = await User.findByPk(userId);
+  const isValid = await bcrypt.compare(oldPassword, user.password);
+  if (!isValid) {
+    throw ApiError.badRequest('Wrong password');
   }
+  user.password = await bcrypt.hash(newPassword, 10);
+  await user.save();
+}
 
-  const resetToken = uuid();
+async function updateEmail(userId, password, newEmail) {
+  const user = await User.findByPk(userId);
+  const isValid = await bcrypt.compare(password, user.password);
+  if (!isValid) {
+    throw ApiError.badRequest('Wrong password');
+  }
+  // Повідомити стару електронну адресу про зміну
+  await emailService.sendEmailChangeNotification(user.email, newEmail);
+  user.email = newEmail;
+  await user.save();
+}
 
-  await userService.update(
-    { resetPasswordToken: resetToken },
-    { where: { id: user.id } },
-  );
-
-  await emailService.sendPostResetPassword(email, resetToken);
-
-  res.sendStatus(204);
-};
+async function getByResetToken(token) {
+  return User.findOne({ where: { resetPasswordToken: token } });
+}
 
 export const userService = {
   getAllActivated,
   normalize,
   findByEmail,
   register,
-  resetPasswordToken,
+  updateName,
+  updatePassword,
+  updateEmail,
+  getByResetToken,
 };
